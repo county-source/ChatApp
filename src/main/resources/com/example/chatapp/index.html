@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="styles/output.css">
+</head>
+<body class="bg-black text-gray-300 h-screen flex items-center justify-center">
+<!-- Login Screen -->
+<div id="login-screen" class="w-full max-w-md bg-gray-900 rounded-xl shadow-xl p-8 space-y-6">
+    <h1 class="text-3xl font-bold text-center text-gray-100">Vítejte v ChatApp</h1>
+    <div class="space-y-4">
+        <div>
+            <label for="username" class="block text-sm font-medium text-gray-200">Uživatelské jméno</label>
+            <input id="username" type="text" placeholder="Zadejte uživatelské jméno"
+                   class="mt-1 w-full px-4 py-2 bg-gray-800 text-gray-200 rounded-lg focus:ring-gray-500 focus:border-gray-500">
+        </div>
+        <button onclick="login()"
+                class="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-100 font-semibold transition">
+            Přihlásit se
+        </button>
+    </div>
+</div>
+
+<!-- Chat Screen -->
+<div id="chat-screen" class="hidden flex flex-col h-full w-full max-w-4xl bg-gray-900 rounded-xl shadow-xl overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gray-800 px-6 py-4 flex items-center justify-between">
+        <h2 id="chat-user" class="text-xl font-semibold text-gray-100">Uživatel</h2>
+        <button onclick="logout()"
+                class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-200 text-sm">
+            Odhlásit
+        </button>
+    </div>
+    <!-- Messages -->
+    <div id="messages" class="flex-1 p-6 overflow-auto space-y-4 bg-black">
+        <!-- Zde se vkládají zprávy i oznámení -->
+    </div>
+    <!-- Input -->
+    <div class="bg-gray-800 px-6 py-4 flex items-center space-x-4">
+        <input id="msg-input" type="text" placeholder="Napište zprávu..."
+               class="flex-1 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg focus:ring-gray-500 focus:border-gray-500">
+        <button onclick="sendMessage()"
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-200 font-medium">
+            Odeslat
+        </button>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const loginScreen = document.getElementById('login-screen');
+        const chatScreen = document.getElementById('chat-screen');
+        const usernameInput = document.getElementById('username');
+        const msgInput = document.getElementById('msg-input');
+
+        function login() {
+            const user = usernameInput.value.trim();
+            if (!user) return alert('Zadej uživatelské jméno');
+            sessionStorage.setItem('username', user);
+            loginScreen.classList.add('hidden');
+            chatScreen.classList.remove('hidden');
+            document.getElementById('chat-user').textContent = user;
+            if (typeof javaClient !== 'undefined') {
+                try {
+                    javaClient.connect('localhost', 12345);
+                    javaClient.sendName(user);
+                } catch (e) {
+                    console.error('Connection error:', e);
+                    alert('Nelze se připojit: ' + e.message);
+                }
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('username');
+            loginScreen.classList.remove('hidden');
+            chatScreen.classList.add('hidden');
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Zobrazí chatovou zprávu
+        function appendMessage(user, text) {
+            const messagesDiv = document.getElementById('messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'space-y-1 ' +
+                (user === document.getElementById('chat-user').textContent ? 'text-right' : 'text-left');
+
+            if (user && user !== document.getElementById('chat-user').textContent) {
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'text-sm font-semibold text-gray-400';
+                nameLabel.textContent = user;
+                wrapper.appendChild(nameLabel);
+            }
+
+            const bubble = document.createElement('div');
+            bubble.className = 'inline-block px-4 py-2 rounded-2xl ' +
+                (user === document.getElementById('chat-user').textContent ?
+                    'bg-gray-700 text-gray-100' : 'bg-gray-800 text-gray-200');
+            bubble.textContent = text;
+            wrapper.appendChild(bubble);
+            messagesDiv.appendChild(wrapper);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Zobrazí oznámení (připojení/odpojení)
+        function appendNotification(text) {
+            const messagesDiv = document.getElementById('messages');
+            const notice = document.createElement('div');
+            notice.className = 'text-center text-sm italic text-gray-500 my-2';
+            notice.textContent = text;
+            messagesDiv.appendChild(notice);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function sendMessage() {
+            const txt = msgInput.value.trim();
+            if (!txt) return;
+            if (typeof javaClient !== 'undefined') javaClient.sendMessage(txt);
+            msgInput.value = '';
+            msgInput.focus();
+        }
+
+        usernameInput.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+        msgInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+        window.login = login;
+        window.logout = logout;
+        window.sendMessage = sendMessage;
+        window.appendMessage = appendMessage;
+        window.appendNotification = appendNotification;
+
+        loginScreen.classList.remove('hidden');
+        chatScreen.classList.add('hidden');
+
+        const saved = sessionStorage.getItem('username');
+        if (saved) { usernameInput.value = saved; login(); }
+    });
+</script>
