@@ -1,0 +1,207 @@
+/* styles.css – Full stylesheet for ChatApp in dark mode */
+
+/* 1. Color Variables */
+:root {
+    --bg: #121212;           /* App background */
+    --surface: #1E1E1E;      /* Panels and containers */
+    --surface-alt: #2A2A2A;  /* Alternate surfaces */
+    --primary: #5865F2;      /* Accent color */
+    --text: #E0E0E0;         /* Main text */
+    --text-alt: #AAAAAA;     /* Secondary text */
+    --hover: #2A2A2A;        /* Hover backgrounds */
+}
+
+/* 2. Global Resets */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+}
+
+/* 3. Screen Containers */
+.screen {
+    position: absolute;
+    top: 0; bottom: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+}
+.hidden {
+    display: none;
+}
+
+/* 4. Login Screen */
+.login-box {
+    background: var(--surface);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.login-box h2 {
+    text-align: center;
+    font-size: 1.5rem;
+    color: var(--text);
+}
+.login-box input[type="text"] {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--surface-alt);
+    color: var(--text);
+}
+.login-box label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-alt);
+}
+.login-box button {
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--primary);
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.login-box button:hover {
+    background: darken(var(--primary), 10%);
+}
+
+/* 5. Custom Title Bar */
+.title-bar {
+    -fx-background-color: var(--bg); /* matches app background */
+    padding: 4px;
+    spacing: 8px;
+    alignment: center-right;
+    -fx-cursor: default;
+}
+.title-bar .title-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: var(--text);
+    -fx-font-size: 12pt;
+    -fx-padding: 0 6px;
+    -fx-cursor: hand;
+}
+.title-bar .title-button:hover {
+    -fx-background-color: var(--hover);
+}
+
+/* 6. Chat Header (fallback if not using title-bar) */
+.chat-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--surface);
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--surface-alt);
+}
+.chat-header #chat-user {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text);
+}
+.chat-header button {
+    background: none;
+    border: none;
+    color: var(--text-alt);
+    cursor: pointer;
+}
+.chat-header button:hover {
+    color: var(--text);
+}
+
+/* 7. Messages Area */
+.chat-messages {
+    position: absolute;
+    top: 60px;   /* under header/title bar */
+    bottom: 60px;/* above input */
+    left: 0; right: 0;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* 8. Message Bubbles */
+.msg {
+    max-width: 70%;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    word-wrap: break-word;
+}
+.msg.self {
+    margin-left: auto;
+    background: var(--primary);
+    color: #fff;
+}
+.msg.other {
+    margin-right: auto;
+    background: var(--surface-alt);
+    color: var(--text);
+}
+.msg .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* 9. Chat Input */
+.chat-input {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    gap: 0.5rem;
+    background: var(--surface);
+    padding: 0.5rem 1rem;
+}
+.chat-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--surface-alt);
+    color: var(--text);
+}
+.chat-input button {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 4px;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.chat-input button:hover {
+    background: darken(var(--primary), 10%);
+}
