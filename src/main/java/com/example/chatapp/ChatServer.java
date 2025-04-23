@@ -2,77 +2,60 @@ package com.example.chatapp;
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChatServer {
     private static final int PORT = 12345;
-    private final Set<ClientHandler> clients = ConcurrentHashMap.newKeySet();
+    private final Set<PrintWriter> clients = ConcurrentHashMap.newKeySet();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public static void main(String[] args) {
         new ChatServer().start();
     }
 
     public void start() {
-        System.out.println("Server spuštěn na portu " + PORT);
+        System.out.println("Server starting on port " + PORT);
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            ExecutorService pool = Executors.newCachedThreadPool();
             while (true) {
                 Socket socket = serverSocket.accept();
-                ClientHandler handler = new ClientHandler(socket);
-                clients.add(handler);
-                pool.execute(handler);
+                executor.execute(() -> handleClient(socket));
             }
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            executor.shutdown();
         }
     }
 
-    private class ClientHandler implements Runnable {
-        private final Socket socket;
-        private final BufferedReader in;
-        private final PrintWriter out;
-        private final String name;
+    private void handleClient(Socket socket) {
+        System.out.println("New connection from " + socket.getRemoteSocketAddress());
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
-        ClientHandler(Socket socket) throws IOException {
-            this.socket = socket;
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
-            this.name = in.readLine();
+            // Read and broadcast the username
+            String name = in.readLine();
             broadcast(name + " se připojil.");
-        }
+            clients.add(out);
 
-        @Override
-        public void run() {
-            try {
-                String msg;
-                while ((msg = in.readLine()) != null) {
-                    broadcast(name + ": " + msg);
-                }
-            } catch (IOException e) {
-                // klient odpojen
-            } finally {
-                broadcast(name + " odešel.");
-                close();
+            // Relay messages
+            String line;
+            while ((line = in.readLine()) != null) {
+                broadcast(name + ": " + line);
             }
-        }
-
-        void close() {
-            try {
-                clients.remove(this);
-                socket.close();
-            } catch (IOException ignored) {}
-        }
-
-        void send(String message) {
-            out.println(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            broadcast("Uživatel odešel.");
         }
     }
 
     private void broadcast(String message) {
         System.out.println("Broadcast: " + message);
-        for (ClientHandler c : clients) {
-            c.send(message);
+        for (PrintWriter writer : clients) {
+            writer.println(message);
         }
     }
 }

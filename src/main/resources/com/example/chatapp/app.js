@@ -1,116 +1,79 @@
-// app.js
-
 window.addEventListener('DOMContentLoaded', () => {
-    // Always start at login
-    sessionStorage.removeItem('username');
-
-    const loginScreen    = document.getElementById('login-screen');
-    const chatScreen     = document.getElementById('chat-screen');
-    const usernameInput  = document.getElementById('username');
-    const rememberBox    = document.getElementById('remember');
-    const messagesDiv    = document.getElementById('messages');
-    const msgInput       = document.getElementById('msg-input');
-    const btnLogin       = document.getElementById('btn-login');
-    const btnSend        = document.getElementById('btn-send');
-
-    // Expose API
-    window.login               = login;
-    window.logout              = logout;
-    window.sendMessage         = sendMessage;
-    window.appendMessage       = appendMessage;
-    window.appendNotification  = appendNotification;
-
-    // Show login
-    loginScreen.classList.remove('hidden');
-    chatScreen.classList.add('hidden');
+    const loginScreen   = document.getElementById('login-screen');
+    const chatScreen    = document.getElementById('chat-screen');
+    const usernameInput = document.getElementById('username');
+    const messagesDiv   = document.getElementById('messages');
+    const msgInput      = document.getElementById('msg-input');
+    const btnLogin      = document.getElementById('btn-login');
+    const btnSend       = document.getElementById('btn-send');
 
     // Bind events
     btnLogin.addEventListener('click', login);
-    usernameInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') login();
-    });
+    usernameInput.addEventListener('keydown', e => e.key==='Enter' && login());
     btnSend.addEventListener('click', sendMessage);
-    msgInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    msgInput.addEventListener('keydown', e => e.key==='Enter' && sendMessage());
+
+    // Show login first
+    loginScreen.classList.remove('hidden');
+    chatScreen.classList.add('hidden');
 });
 
-// Show chat UI and notify Java
+// Login and notify server
 function login() {
     const user = document.getElementById('username').value.trim();
-    if (!user) return alert('Please enter a username');
-
-    // Remember per session
-    if (document.getElementById('remember').checked) {
-        sessionStorage.setItem('username', user);
-    }
-
+    if (!user) return alert('Enter username');
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('chat-screen').classList.remove('hidden');
     document.getElementById('chat-user').textContent = user;
 
-    if (window.javaClient) {
-        try {
-            javaClient.sendName(user);
-        } catch (err) {
-            console.error('Connection error:', err);
-            alert('Cannot connect: ' + err.message);
-        }
-    } else {
-        console.error('javaClient not available yet');
-    }
+    javaClient.connect();           // connects to localhost:12345
+    javaClient.sendName(user);      // notifies join
 }
 
+// Logout
 function logout() {
-    sessionStorage.removeItem('username');
     document.getElementById('chat-screen').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
     document.getElementById('messages').innerHTML = '';
 }
 
-// Notification (join/leave)
+// Append a join/leave notification
 function appendNotification(text) {
-    const messagesDiv = document.getElementById('messages');
-    const notice = document.createElement('div');
-    notice.className = 'msg notification';
-    notice.textContent = text;
-    messagesDiv.appendChild(notice);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    const div = document.createElement('div');
+    div.className = 'msg notification';
+    div.textContent = text;
+    document.getElementById('messages').appendChild(div);
+    scrollToBottom();
 }
 
-// Chat bubble with username for others
+// Append a chat bubble
 function appendMessage(user, text) {
-    const currentUser = document.getElementById('chat-user').textContent;
-    const isSelf      = (user === currentUser);
-    const wrapper     = document.createElement('div');
-    wrapper.className = 'msg ' + (isSelf ? 'self' : 'other');
-
+    const current = document.getElementById('chat-user').textContent;
+    const isSelf = (user===current);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg ' + (isSelf?'self':'other');
     if (isSelf) {
         wrapper.innerHTML = `<div class="bubble self-bubble">${text}</div>`;
     } else {
         wrapper.innerHTML = `
       <div class="avatar">${user.charAt(0).toUpperCase()}</div>
-      <div class="message-content">
-        <div class="message-user">${user}</div>
-        <div class="bubble">${text}</div>
-      </div>
+      <div class="bubble">${text}</div>
     `;
     }
-
-    const messagesDiv = document.getElementById('messages');
-    messagesDiv.appendChild(wrapper);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    document.getElementById('messages').appendChild(wrapper);
+    scrollToBottom();
 }
 
-// Send a message
+// Send a chat message
 function sendMessage() {
     const txt = document.getElementById('msg-input').value.trim();
     if (!txt) return;
-    if (window.javaClient) {
-        javaClient.sendMessage(txt);
-    } else {
-        console.error('javaClient not available');
-    }
+    javaClient.sendMessage(txt);
     document.getElementById('msg-input').value = '';
-    document.getElementById('msg-input').focus();
+}
+
+// Scroll messages to bottom
+function scrollToBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
 }

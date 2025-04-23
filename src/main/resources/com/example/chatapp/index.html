@@ -7,25 +7,20 @@
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-
-<!-- LOGIN SCREEN -->
 <div id="login-screen" class="screen">
     <div class="login-box">
         <h2>Login</h2>
         <input id="username" type="text" placeholder="Username" required>
-        <label><input id="remember" type="checkbox"> Remember me</label>
         <button id="btn-login" type="button">Sign In</button>
     </div>
 </div>
 
-<!-- CHAT SCREEN -->
 <div id="chat-screen" class="screen hidden">
     <header class="chat-header">
         <div id="chat-user">User</div>
         <button onclick="logout()">Logout</button>
     </header>
     <main id="messages" class="chat-messages"></main>
-    <!-- No <form> wrapper here; button is type="button" -->
     <div class="chat-input">
         <input id="msg-input" type="text" placeholder="Type a message…" required>
         <button id="btn-send" type="button">Send</button>
