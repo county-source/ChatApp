@@ -11,8 +11,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
+import javafx.scene.web.*;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
@@ -20,15 +19,13 @@ import netscape.javascript.JSObject;
 import java.net.URL;
 
 public class MainApp extends Application {
-    private ChatClient client;
-
     @Override
     public void start(Stage stage) {
         stage.initStyle(StageStyle.UNDECORATED);
 
-        // Custom title bar
+        // Title bar with Mac-style controls
         HBox titleBar = new HBox(8);
-        titleBar.setPadding(new Insets(4));
+        titleBar.setPadding(new Insets(5));
         titleBar.setStyle("-fx-background-color: #121212;");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -52,27 +49,29 @@ public class MainApp extends Application {
             }
         });
 
-        // WebView UI
+        // WebView and JS bridge
         WebView webView = new WebView();
         WebEngine engine = webView.getEngine();
-        client = new ChatClient();
+        ChatClient client = new ChatClient();
         client.setUIUpdater((user, text) ->
                 Platform.runLater(() -> {
-                    String esc = text.replace("'", "\\'");
+                    String t = text.replace("'", "\\'");
                     if (user.isEmpty()) {
-                        engine.executeScript("appendNotification('" + esc + "')");
+                        engine.executeScript("appendNotification('" + t + "')");
                     } else {
-                        String eu = user.replace("'", "\\'");
-                        engine.executeScript("appendMessage('" + eu + "','" + esc + "')");
+                        String u = user.replace("'", "\\'");
+                        engine.executeScript("appendMessage('" + u + "','" + t + "')");
                     }
                 })
         );
-        engine.getLoadWorker().stateProperty().addListener((obs,old,newState) -> {
-            if (newState == Worker.State.SUCCEEDED) {
-                JSObject win = (JSObject) engine.executeScript("window");
-                win.setMember("javaClient", client);
-            }
-        });
+        engine.getLoadWorker().stateProperty().addListener(
+                (obs,old,newState) -> {
+                    if (newState == Worker.State.SUCCEEDED) {
+                        JSObject win = (JSObject) engine.executeScript("window");
+                        win.setMember("javaClient", client);
+                    }
+                }
+        );
         URL url = getClass().getResource("/com/example/chatapp/index.html");
         if (url == null) throw new IllegalStateException("index.html not found");
         engine.load(url.toExternalForm());
@@ -82,16 +81,18 @@ public class MainApp extends Application {
         stage.show();
     }
 
-    private Circle makeCircle(String color, EventHandler<MouseEvent> handler) {
-        Circle c = new Circle(6, Color.web(color));
+    private Circle makeCircle(String hex, EventHandler<MouseEvent> h) {
+        Circle c = new Circle(6, Color.web(hex));
         c.setStroke(Color.rgb(0,0,0,0.2));
-        c.setOnMouseClicked(handler);
+        c.setOnMouseClicked(h);
         c.setOnMouseEntered(e -> c.setOpacity(0.8));
         c.setOnMouseExited(e -> c.setOpacity(1.0));
         return c;
     }
 
-    public static void main(String[] args) { launch(args); }
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     private static class Delta { double x, y; }
 }

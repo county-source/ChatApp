@@ -1,64 +1,89 @@
 package com.example.chatapp;
 
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 
+/**
+ * ChatClient discovers the server via UDP, then connects via TCP.
+ */
 public class ChatClient {
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-    private UIUpdater uiUpdater;
+    private UIUpdater ui;
 
     public interface UIUpdater { void update(String user, String text); }
 
-    public void setUIUpdater(UIUpdater u) { this.uiUpdater = u; }
+    public void setUIUpdater(UIUpdater ui) {
+        this.ui = ui;
+    }
 
-    /** Connect to specified host/port */
-    public void connect(String host, int port) {
+    /** Automatically discover server and connect */
+    public void connect() {
         try {
-            socket = new Socket(host, port);
+            // 1) Discover server address
+            InetSocketAddress addr = discoverServer();                              // :contentReference[oaicite:4]{index=4}
+
+            // 2) Open TCP socket
+            socket = new Socket(addr.getAddress(), addr.getPort());
             in     = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out    = new PrintWriter(socket.getOutputStream(), true);
             new Thread(this::listen).start();
-            System.out.println("ChatClient: connected to " + host + ":" + port);
+            System.out.println("ChatClient connected to " + addr);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /** Default connect to localhost:12345 */
-    public void connect() {
-        connect("localhost", 12345);
+    /** Broadcasts a UDP packet and waits for the server’s reply */
+    private InetSocketAddress discoverServer() throws IOException {
+        try (DatagramSocket ds = new DatagramSocket()) {
+            ds.setBroadcast(true);
+            byte[] req = DiscoveryConfig.DISCOVERY_REQUEST.getBytes();
+            DatagramPacket sendPkt = new DatagramPacket(
+                    req, req.length,
+                    InetAddress.getByName("255.255.255.255"),
+                    DiscoveryConfig.UDP_DISCOVERY_PORT
+            );
+            ds.send(sendPkt);                                                       //
+
+            // wait for response
+            byte[] buf = new byte[256];
+            DatagramPacket recvPkt = new DatagramPacket(buf, buf.length);
+            ds.setSoTimeout(3000);
+            ds.receive(recvPkt);
+            String resp = new String(recvPkt.getData(), 0, recvPkt.getLength());
+            // format: "CHAT_SERVER_HERE:12345"
+            String portStr = resp.substring(resp.indexOf(':') + 1);
+            return new InetSocketAddress(
+                    recvPkt.getAddress(),
+                    Integer.parseInt(portStr)
+            );
+        }
     }
 
-    /** Send username and immediately notify UI */
     public void sendName(String name) {
         if (out == null) connect();
         out.println(name);
-        if (uiUpdater != null) uiUpdater.update("", name + " se připojil.");
-        System.out.println("ChatClient: sent name = " + name);
+        if (ui != null) ui.update("", name + " se připojil.");
     }
 
-    /** Send a chat message */
     public void sendMessage(String text) {
         if (out == null) connect();
         out.println(text);
-        System.out.println("ChatClient: sent message = " + text);
     }
 
-    /** Listen for server broadcasts */
     private void listen() {
         try {
             String line;
             while ((line = in.readLine()) != null) {
-                String user = "";
-                String msg  = line;
+                String user = "", msg = line;
                 int idx = line.indexOf(": ");
                 if (idx != -1) {
                     user = line.substring(0, idx);
                     msg  = line.substring(idx + 2);
                 }
-                if (uiUpdater != null) uiUpdater.update(user, msg);
+                if (ui != null) ui.update(user, msg);
             }
         } catch (IOException e) {
             e.printStackTrace();
