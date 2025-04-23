@@ -1,26 +1,26 @@
 // app.js
 
 window.addEventListener('DOMContentLoaded', () => {
-    // Clear any leftover sessionStorage so each instance starts fresh
+    // Always start at login
     sessionStorage.removeItem('username');
 
-    const loginScreen   = document.getElementById('login-screen');
-    const chatScreen    = document.getElementById('chat-screen');
-    const usernameInput = document.getElementById('username');
-    const rememberBox   = document.getElementById('remember');
-    const messagesDiv   = document.getElementById('messages');
-    const msgInput      = document.getElementById('msg-input');
-    const btnLogin      = document.getElementById('btn-login');
-    const btnSend       = document.getElementById('btn-send');
+    const loginScreen    = document.getElementById('login-screen');
+    const chatScreen     = document.getElementById('chat-screen');
+    const usernameInput  = document.getElementById('username');
+    const rememberBox    = document.getElementById('remember');
+    const messagesDiv    = document.getElementById('messages');
+    const msgInput       = document.getElementById('msg-input');
+    const btnLogin       = document.getElementById('btn-login');
+    const btnSend        = document.getElementById('btn-send');
 
-    // Expose API for inline handlers
-    window.login              = login;
-    window.logout             = logout;
-    window.sendMessage        = sendMessage;
-    window.appendMessage      = appendMessage;
-    window.appendNotification = appendNotification;
+    // Expose API
+    window.login               = login;
+    window.logout              = logout;
+    window.sendMessage         = sendMessage;
+    window.appendMessage       = appendMessage;
+    window.appendNotification  = appendNotification;
 
-    // Always show login first
+    // Show login
     loginScreen.classList.remove('hidden');
     chatScreen.classList.add('hidden');
 
@@ -29,7 +29,6 @@ window.addEventListener('DOMContentLoaded', () => {
     usernameInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') login();
     });
-
     btnSend.addEventListener('click', sendMessage);
     msgInput.addEventListener('keydown', e => {
         if (e.key === 'Enter') sendMessage();
@@ -40,17 +39,18 @@ window.addEventListener('DOMContentLoaded', () => {
 function login() {
     const user = document.getElementById('username').value.trim();
     if (!user) return alert('Please enter a username');
-    // Remember in session if checkbox is checked
+
+    // Remember per session
     if (document.getElementById('remember').checked) {
         sessionStorage.setItem('username', user);
     }
+
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('chat-screen').classList.remove('hidden');
     document.getElementById('chat-user').textContent = user;
 
     if (window.javaClient) {
         try {
-            javaClient.connect();
             javaClient.sendName(user);
         } catch (err) {
             console.error('Connection error:', err);
@@ -68,6 +68,7 @@ function logout() {
     document.getElementById('messages').innerHTML = '';
 }
 
+// Notification (join/leave)
 function appendNotification(text) {
     const messagesDiv = document.getElementById('messages');
     const notice = document.createElement('div');
@@ -77,10 +78,11 @@ function appendNotification(text) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+// Chat bubble with username for others
 function appendMessage(user, text) {
-    const current = document.getElementById('chat-user').textContent;
-    const isSelf  = (user === current);
-    const wrapper = document.createElement('div');
+    const currentUser = document.getElementById('chat-user').textContent;
+    const isSelf      = (user === currentUser);
+    const wrapper     = document.createElement('div');
     wrapper.className = 'msg ' + (isSelf ? 'self' : 'other');
 
     if (isSelf) {
@@ -88,7 +90,10 @@ function appendMessage(user, text) {
     } else {
         wrapper.innerHTML = `
       <div class="avatar">${user.charAt(0).toUpperCase()}</div>
-      <div class="bubble">${text}</div>
+      <div class="message-content">
+        <div class="message-user">${user}</div>
+        <div class="bubble">${text}</div>
+      </div>
     `;
     }
 
@@ -97,6 +102,7 @@ function appendMessage(user, text) {
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+// Send a message
 function sendMessage() {
     const txt = document.getElementById('msg-input').value.trim();
     if (!txt) return;

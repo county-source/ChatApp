@@ -12,6 +12,11 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import netscape.javascript.JSObject;
+import javafx.event.EventHandler;              // JavaFX event handler interface :contentReference[oaicite:0]{index=0}
+import javafx.scene.input.MouseEvent;           // Mouse event type for dragging :contentReference[oaicite:1]{index=1}
+import javafx.scene.paint.Color;               // For coloring the control circles
+import javafx.scene.shape.Circle;              // For drawing the mac-style buttons
+
 
 import java.net.URL;
 

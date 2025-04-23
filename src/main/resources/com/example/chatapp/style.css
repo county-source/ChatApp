@@ -205,3 +205,14 @@ body {
 .chat-input button:hover {
     background: darken(var(--primary), 10%);
 }
+
+.message-content {
+    display: flex;
+    flex-direction: column;
+}
+.message-user {
+    font-size: 0.8rem;
+    color: #888;  /* lighter grey for names */
+    margin-bottom: 2px;
+}
+

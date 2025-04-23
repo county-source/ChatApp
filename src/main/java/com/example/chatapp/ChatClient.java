@@ -26,7 +26,7 @@ public class ChatClient {
         this.uiUpdater = updater;
     }
 
-    /** Ensure connection to localhost:12345 */
+    /** Ensure we’re connected, otherwise connect to localhost:12345 */
     private void ensureConnected() {
         if (socket == null || socket.isClosed()) {
             connect();
@@ -43,7 +43,7 @@ public class ChatClient {
         try {
             socket = new Socket(host, port);
             in     = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out    = new PrintWriter(socket.getOutputStream(), true); // autoFlush
+            out    = new PrintWriter(socket.getOutputStream(), true);  // autoFlush
             new Thread(this::listen).start();
             System.out.println("ChatClient: connected to " + host + ":" + port);
         } catch (IOException e) {
@@ -51,13 +51,13 @@ public class ChatClient {
         }
     }
 
-    /** Send the chosen username, and immediately notify UI of join */
+    /** Send the chosen username, then immediately notify UI of join */
     public void sendName(String name) {
         ensureConnected();
         if (out != null) {
             out.println(name);
             System.out.println("ChatClient: sent name = " + name);
-            // Immediately notify UI that this user has joined
+            // Notify UI that this user has joined
             if (uiUpdater != null) {
                 uiUpdater.update("", name + " se připojil.");
             }

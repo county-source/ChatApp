@@ -38,7 +38,6 @@ public class ChatServer {
             this.socket = socket;
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
-            out.println("Zadej své jméno:");
             this.name = in.readLine();
             broadcast(name + " se připojil.");
         }
