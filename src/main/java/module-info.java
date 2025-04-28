@@ -3,7 +3,6 @@ module com.example.chatapp {
     requires javafx.fxml;
     requires javafx.web;
     requires jdk.jsobject;
-
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
     requires net.synedra.validatorfx;
@@ -14,4 +13,6 @@ module com.example.chatapp {
 
     opens com.example.chatapp to javafx.fxml;
     exports com.example.chatapp;
+
 }
+
